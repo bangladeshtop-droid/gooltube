@@ -1,0 +1,6 @@
+{
+  "name": "TaskX Pro",
+  "description": "Premium task and mini-game hub with rewards, mining, and custom financial tracking.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
