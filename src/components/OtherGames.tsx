@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, PlayCircle, Star, Shuffle, RotateCcw, Box, Sparkles, Trophy } from 'lucide-react';
 import { User, AppNotification } from '../types';
+import { triggerExternalAds } from '../utils';
 
 interface OtherGamesProps {
   gameId: string;
@@ -26,6 +27,7 @@ export default function OtherGames({
   const watchAdSequence = (onDone: () => void) => {
     setAdOverlayOpen(true);
     setAdCountdown(4);
+    triggerExternalAds();
     adCallbackRef.current = onDone;
 
     const interval = setInterval(() => {
@@ -931,6 +933,92 @@ export default function OtherGames({
               )}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ==================================== */}
+      {/* 6. TRIVIA QUIZ */}
+      {/* ==================================== */}
+      {gameId === 'quiz' && (
+        <div className="flex flex-col items-center p-2 w-full">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 w-full text-center mb-6">
+             <h4 className="text-white font-bold mb-2">AI Generated Trivia</h4>
+             <p className="text-xs text-slate-400 mb-4">Are you ready to test your knowledge?</p>
+             <button
+               onClick={() => {
+                 watchAdSequence(() => {
+                   onAddCoins(10, 'Trivia quiz ad reward completion');
+                   onAddNotification({
+                      type: 'game', title: 'Trivia Passed', description: 'Earned 10 🪙 from completing trivia run.', coinsChange: 10
+                   });
+                 });
+               }}
+               className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 rounded-xl text-white font-bold text-xs uppercase tracking-widest cursor-pointer"
+             >
+               Start Quiz (Watch Ad)
+             </button>
+          </div>
+        </div>
+      )}
+
+      {/* ==================================== */}
+      {/* 7. ROCK PAPER SCISSORS */}
+      {/* ==================================== */}
+      {gameId === 'rps' && (
+        <div className="flex flex-col items-center w-full">
+           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 w-full text-center">
+             <h4 className="text-white font-bold mb-4">RPS Duel</h4>
+             <div className="flex gap-3 justify-center mb-6">
+                {['Rock', 'Paper', 'Scissors'].map(choice => (
+                  <button
+                    key={choice}
+                    onClick={() => {
+                       const botChoice = ['Rock', 'Paper', 'Scissors'][Math.floor(Math.random() * 3)];
+                       if (choice === botChoice) {
+                          onAddNotification({ type: 'game', title: 'Draw!', description: `Bot also chose ${choice}.` });
+                       } else if (
+                          (choice === 'Rock' && botChoice === 'Scissors') ||
+                          (choice === 'Paper' && botChoice === 'Rock') ||
+                          (choice === 'Scissors' && botChoice === 'Paper')
+                       ) {
+                          watchAdSequence(() => {
+                             onAddCoins(15, 'RPS Win');
+                             onAddNotification({ type: 'game', title: 'You Win!', description: `Bot chose ${botChoice}. Earned 15 🪙.`, coinsChange: 15 });
+                          });
+                       } else {
+                          onAddNotification({ type: 'game', title: 'You Lose!', description: `Bot chose ${botChoice}. Better luck next time!` });
+                       }
+                    }}
+                    className="flex-1 py-4 bg-slate-800 border border-slate-700 hover:border-amber-500 rounded-xl text-white font-bold text-xs cursor-pointer active:scale-95 transition-all"
+                  >
+                    {choice}
+                  </button>
+                ))}
+             </div>
+           </div>
+        </div>
+      )}
+
+      {/* ==================================== */}
+      {/* 8. DIRECT AD REWARD */}
+      {/* ==================================== */}
+      {gameId === 'ad' && (
+        <div className="flex flex-col items-center justify-center p-4 w-full min-h-[300px]">
+           <button
+             onClick={() => {
+                watchAdSequence(() => {
+                   onAddCoins(5, 'Watch Video Ad Reward');
+                   onAddNotification({ type: 'game', title: 'Thank You', description: 'Watched an ad. Earned 5 🪙.', coinsChange: 5});
+                });
+             }}
+             className="w-full max-w-sm py-5 bg-indigo-600 hover:bg-indigo-500 rounded-2xl text-white font-black text-sm uppercase tracking-widest cursor-pointer hover:scale-105 active:scale-95 transition-all shadow-[0_10px_30px_rgba(79,70,229,0.3)] flex flex-col items-center justify-center gap-2"
+           >
+             <PlayCircle className="w-8 h-8" />
+             Watch Sponsor Ad
+           </button>
+           <p className="text-[10px] text-slate-500 mt-4 max-w-xs text-center border border-white/5 p-3 rounded-xl bg-white/5">
+             Support out network by watching these premium unskippable ads. Every ad provides network funding.
+           </p>
         </div>
       )}
 

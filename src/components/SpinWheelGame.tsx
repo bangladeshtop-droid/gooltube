@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, PlayCircle, Loader2, Sparkles, Star, Volume2, VolumeX } from 'lucide-react';
 import { User, AppNotification } from '../types';
+import { triggerExternalAds } from '../utils';
 
 interface SpinWheelGameProps {
   user: User;
@@ -88,6 +89,7 @@ export default function SpinWheelGame({
   const watchAdSequence = (onDone: () => void) => {
     setAdOverlayOpen(true);
     setAdCountdown(4);
+    triggerExternalAds();
     adCallbackRef.current = onDone;
 
     const interval = setInterval(() => {

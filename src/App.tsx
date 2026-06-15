@@ -93,6 +93,8 @@ const INITIAL_TASKS: Task[] = [
   },
 ];
 
+import { triggerExternalAds } from './utils';
+
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [currentTab, setCurrentTab] = useState<string>('home'); // active primary nav tab
@@ -162,6 +164,7 @@ export default function App() {
     if (homeAdSlotCooldowns[slotId] > 0) return;
     setActiveAdSlotWatch(slotId);
     setActiveAdSlotSeconds(4);
+    triggerExternalAds();
     
     let currentCount = 4;
     const adTicker = setInterval(() => {
@@ -428,6 +431,7 @@ export default function App() {
     if (!user || user.miningStartTime > 0) return;
     setAdRunningForMining('start');
     setAdSecondsForMining(4);
+    triggerExternalAds();
     const interval = setInterval(() => {
       setAdSecondsForMining((prev) => {
         if (prev <= 1) {
@@ -459,6 +463,7 @@ export default function App() {
     if (!user || user.miningStartTime === 0) return;
     setAdRunningForMining('claim');
     setAdSecondsForMining(4);
+    triggerExternalAds();
     const interval = setInterval(() => {
       setAdSecondsForMining((prev) => {
         if (prev <= 1) {
@@ -886,60 +891,66 @@ export default function App() {
                 />
 
                 {/* ACTIVE TEAM SPONSOR AD SLOTS */}
-                <div className="space-y-3">
+                <div className="space-y-4">
                   <div className="flex items-center justify-between px-1">
-                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                      📺 SPONSOR SPECIAL ADS
+                    <h4 className="text-[11px] font-black text-white uppercase tracking-widest flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-lg bg-gradient-to-r from-amber-500 to-yellow-400 flex items-center justify-center shadow-[0_0_15px_rgba(251,191,36,0.3)]">
+                        <MonitorPlay className="w-3.5 h-3.5 text-black" />
+                      </div>
+                      Premium Ad Slots
                     </h4>
-                    <span className="text-[8px] bg-indigo-500/10 text-indigo-400 font-bold border border-indigo-500/20 px-2 py-0.5 rounded font-mono uppercase">
-                      2 × 2 Grid
+                    <span className="text-[9px] bg-gradient-to-r from-amber-500/20 to-yellow-500/10 text-amber-400 font-bold border border-amber-500/20 px-2.5 py-1 rounded-full font-mono uppercase tracking-widest flex items-center gap-1">
+                      <Sparkles className="w-3 h-3 text-amber-500" />
+                      Sponsor Vault
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 gap-3.5">
                     {[1, 2, 3, 4].map((slotIdx) => {
                       const cooldown = homeAdSlotCooldowns[slotIdx] || 0;
                       return (
                         <div
                           key={slotIdx}
                           onClick={() => cooldown === 0 && triggerHomeAdSlotWatch(slotIdx)}
-                          className={`relative rounded-[20px] overflow-hidden flex flex-col transition-all duration-300 select-none ${
+                          className={`relative rounded-[24px] overflow-hidden flex flex-col transition-all duration-300 select-none ${
                             cooldown > 0
-                              ? 'bg-[#101014] border border-white/5 opacity-60 cursor-not-allowed grayscale'
-                              : 'bg-gradient-to-b from-[#1c1c24] to-[#121216] border border-indigo-500/20 hover:border-indigo-500/50 hover:-translate-y-1 cursor-pointer shadow-[0_8px_30px_rgba(79,70,229,0.15)] active:scale-95 group'
+                              ? 'bg-[#121216] border border-white/5 opacity-50 cursor-not-allowed grayscale'
+                              : 'bg-gradient-to-br from-[#1a1a24] to-[#121216] border border-amber-500/30 hover:border-amber-400 cursor-pointer shadow-[0_8px_30px_rgba(251,191,36,0.1)] active:scale-95 group'
                           }`}
                         >
-                          {cooldown > 0 && (
-                            <div className="absolute inset-x-0 top-0 h-1 bg-white/5" />
+                          {!cooldown && (
+                            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20 pointer-events-none mix-blend-overlay" />
                           )}
                           {!cooldown && (
-                            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-amber-400 opacity-50 group-hover:opacity-100 transition-opacity" />
+                            <div className="absolute -inset-x-8 top-0 h-10 bg-gradient-to-b from-amber-500/20 to-transparent opacity-50 group-hover:opacity-100 transition-opacity blur-md" />
                           )}
                           
-                          {/* Ad Image / Visual Layer */}
-                          <div className="h-16 w-full relative bg-[#0a0a0c] flex items-center justify-center overflow-hidden">
+                          {/* Ad Visual Layer */}
+                          <div className="h-24 w-full relative bg-[#05050A] flex items-center justify-center overflow-hidden">
                             {cooldown > 0 ? (
-                               <div className="absolute inset-0 bg-white/5 flex items-center justify-center backdrop-blur-sm z-10">
-                                  <span className="text-[10px] font-black tracking-widest text-white/50 bg-black/50 px-3 py-1 rounded-full backdrop-blur-md border border-white/10 uppercase">
-                                    WAIT {cooldown}s
+                               <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center backdrop-blur-md z-10">
+                                  <Lock className="w-5 h-5 text-white/30 mb-1" />
+                                  <span className="text-[10px] font-black tracking-widest text-white/50 border border-white/10 bg-white/5 px-3 py-1 rounded-full uppercase">
+                                    {cooldown}s Wait
                                   </span>
                                </div>
                             ) : (
-                              <>
-                                 <div className="absolute inset-0 bg-indigo-500/10 group-hover:bg-indigo-500/20 transition-colors" />
-                                 <div className="absolute -inset-4 bg-[url('https://images.unsplash.com/photo-1614064016738-4f81016cd0c8?w=300&q=80')] bg-cover bg-center opacity-20 filter blur-sm group-hover:scale-110 group-hover:opacity-40 transition-all duration-700" />
-                              </>
+                               <>
+                                 <div className="absolute inset-0 bg-gradient-to-br from-amber-600/20 via-yellow-500/10 to-transparent group-hover:scale-110 transition-transform duration-700" />
+                                 <div className="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center group-hover:bg-amber-500/20 transition-colors shadow-[0_0_20px_rgba(251,191,36,0.15)] relative z-10 border border-amber-500/20">
+                                   <PlayCircle className="w-6 h-6 text-amber-400 group-hover:scale-110 group-hover:text-amber-300 transition-all drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]" />
+                                 </div>
+                               </>
                             )}
-                            <Film className={`w-6 h-6 object-cover z-20 ${cooldown > 0 ? 'text-white/20' : 'text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)] group-hover:scale-110 transition-transform'}`} />
                           </div>
                           
-                          <div className="p-3 text-center flex flex-col justify-center relative z-10 border-t border-white/5 bg-[#121216]/80 backdrop-blur">
-                            <h5 className="text-[11px] font-black text-slate-100 uppercase tracking-wide">Sponsored Ad #{slotIdx}</h5>
+                          <div className="p-3 text-center flex flex-col justify-center relative z-10 border-t border-white/5 bg-[#0A0A0E] backdrop-blur">
+                            <h5 className="text-[11px] font-black text-slate-100 uppercase tracking-widest">Sponsored #{slotIdx}</h5>
                             {cooldown > 0 ? (
-                               <span className="text-[9px] text-[#ffb020] font-mono font-bold mt-1 block">Cooldown active</span>
+                               <span className="text-[9px] text-[#ff4c4c] font-mono font-bold mt-1 block tracking-wider">Cooldown active</span>
                             ) : (
-                               <span className="text-[9.5px] text-indigo-300 font-bold mt-1 flex items-center justify-center gap-1">
-                                 Watch Ad <ChevronRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+                               <span className="text-[9.5px] text-amber-400 font-bold mt-1 flex items-center justify-center gap-1 uppercase tracking-wider group-hover:text-amber-300 transition-colors">
+                                 Watch & Earn <ChevronRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
                                </span>
                             )}
                           </div>
@@ -1059,108 +1070,46 @@ export default function App() {
                 </div>
 
                 {/* Premium Active Quick Launch Columns - Exact 2 Items Per Row */}
-                {adminToggles.showGames && (
+                {adminToggles.showGames !== false && (
                   <div className="grid grid-cols-2 gap-3">
-                  {/* Crash Game Card */}
-                  <div
-                    onClick={playVIPCrashGame}
-                    className="bg-[#141418] hover:bg-[#18181f] border border-white/5 hover:border-white/10 rounded-3xl p-5 flex flex-col items-center justify-center text-center cursor-pointer transition-all hover:scale-[1.02] shadow-[0_10px_30px_rgba(0,0,0,0.3)]"
-                  >
-                    <span className="text-3xl mb-1.5">🚀</span>
-                    <h4 className="text-xs font-black text-slate-100">VIP Rocket Crash</h4>
-                    <span className="text-[8px] text-[#FF4C4C] font-extrabold mt-1">AXIS CRASH</span>
+                  {[
+                    { id: 'mining', name: 'VIP Rocket Crash', subtitle: 'AXIS CRASH', icon: '🚀', color: 'text-[#FF4C4C]', action: playVIPCrashGame },
+                    { id: 'coin', name: 'Coin Multiplier', subtitle: 'SPEED FLIP', icon: '🪙', color: 'text-amber-500', action: playCoinFlip },
+                    { id: 'slot', name: 'Golden Slots', subtitle: 'AD ROLL SPINS', icon: '🎰', color: 'text-rose-500', action: playSlotMachine },
+                    { id: 'spin', name: 'Spin Multiplier', subtitle: 'CHOOSE MULTIPLIER', icon: '🎡', color: 'text-indigo-400', action: playSpinWheel },
+                    { id: 'plinko', name: 'Mega Plinko', subtitle: 'PHYSICS DROP', icon: '🟢', color: 'text-emerald-400', action: () => handleOpenGame('plinko') },
+                    { id: 'color', name: 'Color Match', subtitle: 'MATCH SHADES', icon: '🎨', color: 'text-indigo-400', action: () => handleOpenGame('color') },
+                    { id: 'memory', name: 'Memory Matrix', subtitle: 'BRAIN BOOSTER', icon: '🧠', color: 'text-yellow-500', action: () => handleOpenGame('memory') },
+                    { id: 'ttt', name: 'TicTacToe', subtitle: 'DUEL BOT', icon: '❌', color: 'text-purple-400', action: () => handleOpenGame('ttt') },
+                    { id: 'match3', name: 'Match-3 Quest', subtitle: 'JEWELS BLAST', icon: '💎', color: 'text-pink-500', action: () => handleOpenGame('match3') },
+                    { id: 'luckybox', name: 'Loot Box', subtitle: 'GOLD REVEAL', icon: '📦', color: 'text-[#ffb020]', action: () => handleOpenGame('luckybox') },
+                    { id: 'quiz', name: 'Trivia Quiz', subtitle: 'MIND EARN', icon: '💡', color: 'text-emerald-500', action: () => handleOpenGame('quiz') },
+                    { id: 'rps', name: 'Rock Paper Scissor', subtitle: 'RPS DUEL', icon: '✌️', color: 'text-amber-500', action: () => handleOpenGame('rps') },
+                    { id: 'ad', name: 'Watch Ads', subtitle: 'AD REWARD', icon: '🎬', color: 'text-indigo-400', action: () => handleOpenGame('ad') },
+                  ].filter(game => {
+                     const conf = JSON.parse(localStorage.getItem('__taskx_game_toggles') || '{}');
+                     return conf[game.id] !== false;
+                  }).map(game => {
+                     const logs = JSON.parse(localStorage.getItem('__taskx_game_logos') || '{}');
+                     const customLogo = logs[game.id];
+                     
+                     return (
+                        <div
+                          key={game.id}
+                          onClick={game.action}
+                          className="bg-[#141418] hover:bg-[#18181f] border border-white/5 hover:border-white/10 rounded-3xl p-5 flex flex-col items-center justify-center text-center cursor-pointer transition-all hover:scale-[1.02] shadow-[0_10px_30px_rgba(0,0,0,0.3)] relative overflow-hidden"
+                        >
+                          {customLogo ? (
+                             <img src={customLogo} alt={game.name} className="w-10 h-10 mb-2 rounded-xl object-cover shadow-lg" />
+                          ) : (
+                             <span className="text-3xl mb-1.5">{game.icon}</span>
+                          )}
+                          <h4 className="text-xs font-black text-slate-100">{game.name}</h4>
+                          <span className={`text-[8px] ${game.color} font-extrabold mt-1 uppercase`}>{game.subtitle}</span>
+                        </div>
+                     );
+                  })}
                   </div>
-
-                  {/* Coin Flip Card */}
-                  <div
-                    onClick={playCoinFlip}
-                    className="bg-[#141418] hover:bg-[#18181f] border border-white/5 hover:border-white/10 rounded-3xl p-5 flex flex-col items-center justify-center text-center cursor-pointer transition-all hover:scale-[1.02] shadow-[0_10px_30px_rgba(0,0,0,0.3)]"
-                  >
-                    <span className="text-3xl mb-1.5">🪙</span>
-                    <h4 className="text-xs font-black text-slate-100">Coin Multiplier</h4>
-                    <span className="text-[8px] text-amber-500 font-extrabold mt-1">SPEED FLIP</span>
-                  </div>
-
-                  {/* Slot Machine Card */}
-                  <div
-                    onClick={playSlotMachine}
-                    className="bg-[#141418] hover:bg-[#18181f] border border-white/5 hover:border-white/10 rounded-3xl p-5 flex flex-col items-center justify-center text-center cursor-pointer transition-all hover:scale-[1.02] shadow-[0_10px_30px_rgba(0,0,0,0.3)]"
-                  >
-                    <span className="text-3xl mb-1.5">🎰</span>
-                    <h4 className="text-xs font-black text-slate-100">Golden Slots</h4>
-                    <span className="text-[8px] text-rose-500 font-extrabold mt-1">AD ROLL SPINS</span>
-                  </div>
-
-                  {/* Spin Wheel Card */}
-                  <div
-                    onClick={playSpinWheel}
-                    className="bg-[#141418] hover:bg-[#18181f] border border-white/5 hover:border-white/10 rounded-3xl p-5 flex flex-col items-center justify-center text-center cursor-pointer transition-all hover:scale-[1.02] shadow-[0_10px_30px_rgba(0,0,0,0.3)]"
-                  >
-                    <span className="text-3xl mb-1.5">🎡</span>
-                    <h4 className="text-xs font-black text-slate-100">Spin Multiplier</h4>
-                    <span className="text-[8px] text-indigo-400 font-extrabold mt-1">CHOOSE MULTIPLIER</span>
-                  </div>
-
-                  {/* Pinko Plinko Card */}
-                  <div
-                    onClick={() => handleOpenGame('plinko')}
-                    className="bg-[#141418] hover:bg-[#18181f] border border-white/5 hover:border-white/10 rounded-3xl p-5 flex flex-col items-center justify-center text-center cursor-pointer transition-all hover:scale-[1.02] shadow-[0_10px_30px_rgba(0,0,0,0.3)]"
-                  >
-                    <span className="text-3xl mb-1.5">🟢</span>
-                    <h4 className="text-xs font-black text-slate-100 font-sans tracking-wide">Mega Plinko</h4>
-                    <span className="text-[8px] text-emerald-400 font-extrabold mt-1">PHYSICS DROP</span>
-                  </div>
-
-                  {/* Color Match Card */}
-                  <div
-                    onClick={() => handleOpenGame('color')}
-                    className="bg-[#141418] hover:bg-[#18181f] border border-white/5 hover:border-white/10 rounded-3xl p-5 flex flex-col items-center justify-center text-center cursor-pointer transition-all hover:scale-[1.02] shadow-[0_10px_30px_rgba(0,0,0,0.3)]"
-                  >
-                    <span className="text-3xl mb-1.5">🎨</span>
-                    <h4 className="text-xs font-black text-slate-100">Color Match</h4>
-                    <span className="text-[8px] text-indigo-400 font-extrabold mt-1">MATCH SHADES</span>
-                  </div>
-
-                  {/* Memory card */}
-                  <div
-                    onClick={() => handleOpenGame('memory')}
-                    className="bg-[#141418] hover:bg-[#18181f] border border-white/5 hover:border-white/10 rounded-3xl p-5 flex flex-col items-center justify-center text-center cursor-pointer transition-all hover:scale-[1.02] shadow-[0_10px_30px_rgba(0,0,0,0.3)]"
-                  >
-                    <span className="text-3xl mb-1.5">🧠</span>
-                    <h4 className="text-xs font-black text-slate-100">Memory Matrix</h4>
-                    <span className="text-[8px] text-yellow-500 font-extrabold mt-1">BRAIN BOOSTER</span>
-                  </div>
-
-                  {/* Tic Tac Toe */}
-                  <div
-                    onClick={() => handleOpenGame('ttt')}
-                    className="bg-[#141418] hover:bg-[#18181f] border border-white/5 hover:border-white/10 rounded-3xl p-5 flex flex-col items-center justify-center text-center cursor-pointer transition-all hover:scale-[1.02] shadow-[0_10px_30px_rgba(0,0,0,0.3)]"
-                  >
-                    <span className="text-3xl mb-1.5">❌</span>
-                    <h4 className="text-xs font-black text-slate-100">TicTacToe</h4>
-                    <span className="text-[8px] text-purple-400 font-extrabold mt-1">DUEL BOT</span>
-                  </div>
-
-                  {/* Match-3 Quest */}
-                  <div
-                    onClick={() => handleOpenGame('match3')}
-                    className="bg-[#141418] hover:bg-[#18181f] border border-white/5 hover:border-white/10 rounded-3xl p-5 flex flex-col items-center justify-center text-center cursor-pointer transition-all hover:scale-[1.02] shadow-[0_10px_30px_rgba(0,0,0,0.3)]"
-                  >
-                    <span className="text-3xl mb-1.5">💎</span>
-                    <h4 className="text-xs font-black text-slate-100">Match-3 Quest</h4>
-                    <span className="text-[8px] text-pink-500 font-extrabold mt-1">JEWELS BLAST</span>
-                  </div>
-
-                  {/* Loot box */}
-                  <div
-                    onClick={() => handleOpenGame('luckybox')}
-                    className="bg-[#141418] hover:bg-[#18181f] border border-white/5 hover:border-white/10 rounded-3xl p-5 flex flex-col items-center justify-center text-center cursor-pointer transition-all hover:scale-[1.02] shadow-[0_10px_30px_rgba(0,0,0,0.3)]"
-                  >
-                    <span className="text-3xl mb-1.5">📦</span>
-                    <h4 className="text-xs font-black text-slate-100">Loot Box</h4>
-                    <span className="text-[8px] text-[#ffb020] font-extrabold mt-1">GOLD REVEAL</span>
-                  </div>
-                </div>
                 )}
               </motion.div>
             )}

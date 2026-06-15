@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, PlayCircle, Trophy, Sparkles, Volume2, VolumeX } from 'lucide-react';
 import { User, AppNotification } from '../types';
+import { triggerExternalAds } from '../utils';
 
 interface SlotMachineGameProps {
   user: User;
@@ -71,6 +72,7 @@ export default function SlotMachineGame({
   const watchAdSequence = (onDone: () => void) => {
     setAdOverlayOpen(true);
     setAdCountdown(4);
+    triggerExternalAds();
     adCallbackRef.current = onDone;
 
     const interval = setInterval(() => {

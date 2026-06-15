@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, Sparkles, PlayCircle, Star, Shuffle, Volume2, VolumeX } from 'lucide-react';
 import { User, AppNotification } from '../types';
+import { triggerExternalAds } from '../utils';
 
 interface CoinFlipGameProps {
   user: User;
@@ -81,6 +82,7 @@ export default function CoinFlipGame({
   const watchSimulatedAd = (onDone: () => void) => {
     setAdOverlayOpen(true);
     setAdCountdown(4);
+    triggerExternalAds();
     adCallbackRef.current = onDone;
 
     const interval = setInterval(() => {

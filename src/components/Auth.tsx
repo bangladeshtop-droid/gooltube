@@ -25,38 +25,67 @@ export default function Auth({ onLoginSuccess }: AuthProps) {
 
   // Detect Telegram WebApp Auto Login
   useEffect(() => {
-    // Check if running inside Telegram web app container
-    const isTG = !!(window as any).Telegram?.WebApp;
-    if (isTG) {
-      setIsTelegramWeb(true);
-      const webapp = (window as any).Telegram.WebApp;
-      webapp.ready();
-      webapp.expand();
+    try {
+      // Check if running inside Telegram web app container
+      const webapp = (window as any).Telegram?.WebApp;
+      if (webapp) {
+        // Wrap in try catch as some old clients (version 6.0) throw CloudStorage unsupported errors
+        try {
+          webapp.ready();
+          webapp.expand();
+        } catch (e) {}
 
-      const tgUser = webapp.initDataUnsafe?.user;
-      if (tgUser) {
-        setLoading(true);
-        // Auto sign-up/login of Telegram User
-        setTimeout(() => {
-          const autoUser: UserType = {
-            id: `usr_tg_${tgUser.id}`,
-            name: `${tgUser.first_name || ''} ${tgUser.last_name || ''}`.trim() || 'Telegram User',
-            username: tgUser.username || `tg_${tgUser.id}`,
-            email: tgUser.email || `${tgUser.username || tgUser.id}@telegram.com`,
-            picture: tgUser.photo_url || 'https://telegram.org/img/t_logo.png',
-            coins: 1000, // starting bonus for Telegram members
-            joinedAt: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-            status: 'Active',
-            cvp: '992',
-            cardNumber: `54127512${Math.floor(10000000 + Math.random() * 90000000)}`,
-            miningStartTime: 0,
-          };
-          localStorage.setItem('taskx_v1_is_logged_in', 'true');
-          localStorage.setItem('taskx_v1_user', JSON.stringify(autoUser));
-          onLoginSuccess(autoUser);
-          setLoading(false);
-        }, 1500);
+      try {
+        let deviceId = localStorage.getItem('taskx_v1_device_id');
+        if (!deviceId) {
+          deviceId = `dev_${Date.now()}_${Math.random()}`;
+          localStorage.setItem('taskx_v1_device_id', deviceId);
+        }
+
+        const registeredDevicesStr = localStorage.getItem('taskx_v1_registered_devices') || '{}';
+        const registeredDevices = JSON.parse(registeredDevicesStr);
+
+        // Telegram WebApp Auto Login Duplicate Checks
+        const tgUser = webapp.initDataUnsafe?.user;
+        if (tgUser) {
+          setIsTelegramWeb(true);
+          setLoading(true);
+
+          if (registeredDevices[deviceId] && registeredDevices[deviceId] !== `usr_tg_${tgUser.id}`) {
+             setError('Security Alert: Sub-accounts or multiple accounts are strictly not allowed on a single device! You can only use one account per phone.');
+             setLoading(false);
+             return;
+          }
+
+          // Auto sign-up/login of Telegram User
+          setTimeout(() => {
+            const autoUser: UserType = {
+              id: `usr_tg_${tgUser.id}`,
+              name: `${tgUser.first_name || ''} ${tgUser.last_name || ''}`.trim() || 'Telegram User',
+              username: tgUser.username || `tg_${tgUser.id}`,
+              email: tgUser.email || `${tgUser.username || tgUser.id}@telegram.com`,
+              picture: tgUser.photo_url || 'https://telegram.org/img/t_logo.png',
+              coins: 1000,
+              joinedAt: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+              status: 'Active',
+              cvp: '992',
+              cardNumber: `54127512${Math.floor(10000000 + Math.random() * 90000000)}`,
+              miningStartTime: 0,
+            };
+            
+            registeredDevices[deviceId] = autoUser.id;
+            localStorage.setItem('taskx_v1_registered_devices', JSON.stringify(registeredDevices));
+
+            localStorage.setItem('taskx_v1_is_logged_in', 'true');
+            localStorage.setItem('taskx_v1_user', JSON.stringify(autoUser));
+            onLoginSuccess(autoUser);
+            setLoading(false);
+          }, 1500);
+        }
+      } catch (err) {}
       }
+    } catch (e) {
+      console.warn("Telegram init fail:", e);
     }
   }, []);
 
@@ -120,6 +149,23 @@ export default function Auth({ onLoginSuccess }: AuthProps) {
           setLoading(false);
           return;
         }
+
+        try {
+          let deviceId = localStorage.getItem('taskx_v1_device_id');
+          if (!deviceId) {
+            deviceId = `dev_${Date.now()}_${Math.random()}`;
+            localStorage.setItem('taskx_v1_device_id', deviceId);
+          }
+
+          const registeredDevicesStr = localStorage.getItem('taskx_v1_registered_devices') || '{}';
+          const registeredDevices = JSON.parse(registeredDevicesStr);
+
+          if (registeredDevices[deviceId]) {
+             setError('Security Alert: Sub-accounts or multiple accounts are strictly not allowed on a single device! You can only use one account per phone.');
+             setLoading(false);
+             return;
+          }
+        } catch (e) { console.error('Device validation DB error', e); }
 
         const registered: UserType = {
           id: `usr_${Math.floor(100000 + Math.random() * 900000)}`,
@@ -186,6 +232,16 @@ export default function Auth({ onLoginSuccess }: AuthProps) {
           }
         }
 
+        try {
+          const deviceId = localStorage.getItem('taskx_v1_device_id');
+          if (deviceId) {
+            const registeredDevicesStr = localStorage.getItem('taskx_v1_registered_devices') || '{}';
+            const registeredDevices = JSON.parse(registeredDevicesStr);
+            registeredDevices[deviceId] = registered.id;
+            localStorage.setItem('taskx_v1_registered_devices', JSON.stringify(registeredDevices));
+          }
+        } catch (e) {}
+
         localStorage.setItem('taskx_v1_is_logged_in', 'true');
         localStorage.setItem('taskx_v1_user', JSON.stringify(registered));
         onLoginSuccess(registered);
@@ -207,138 +263,138 @@ export default function Auth({ onLoginSuccess }: AuthProps) {
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0A0C] flex flex-col justify-center items-center px-4 py-8 relative font-sans">
-      {/* Background radial highlights */}
-      <div className="absolute inset-0 bg-radial-gradient(ellipse at center, rgba(234,179,8,0.03) 0%, transparent 70%) pointer-events-none" />
+    <div className="min-h-screen bg-[#05050A] flex flex-col justify-center items-center px-4 py-8 relative font-sans overflow-hidden">
+      {/* Dynamic Background */}
+      <div className="absolute top-[20%] left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-indigo-500/10 rounded-full blur-[100px] animate-pulse pointer-events-none" />
+      <div className="absolute top-[30%] left-[20%] w-[400px] h-[400px] bg-amber-500/10 rounded-full blur-[80px] pointer-events-none" />
+      <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-[0.03] pointer-events-none mix-blend-overlay" />
 
-      <div className="w-full max-w-sm flex flex-col text-center">
-        {/* GOALTUBE BRAND LOGO CARD */}
-        <div className="mb-6 space-y-1">
-          <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-yellow-500 rounded-3xl mx-auto flex items-center justify-center shadow-lg shadow-amber-500/10 border border-yellow-300/30">
-            <Sparkles className="w-8 h-8 text-slate-950 animate-pulse" />
+      <div className="w-full max-w-sm flex flex-col text-center relative z-10">
+        {/* BRAND LOGO CARD */}
+        <div className="mb-8 flex flex-col items-center">
+          <div className="w-20 h-20 bg-gradient-to-tr from-amber-600 via-yellow-400 to-amber-300 rounded-[24px] flex items-center justify-center shadow-[0_0_40px_rgba(251,191,36,0.3)] mb-4 relative overflow-hidden group">
+            <div className="absolute inset-0 bg-white/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
+            <Sparkles className="w-10 h-10 text-slate-950 animate-pulse relative z-10" />
           </div>
-          <h2 className="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-200 to-amber-400 tracking-tight leading-none pt-2 uppercase">
+          <h2 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-white to-amber-200 tracking-tight leading-none uppercase">
             GOALTUBE BD
           </h2>
-          <p className="text-[10px] text-white/40 uppercase tracking-widest font-extrabold font-mono">
+          <p className="text-[10px] text-amber-500/70 uppercase tracking-widest font-black font-mono mt-2 mb-2 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20">
             Premium Task & Social Payouts
           </p>
         </div>
 
         {/* AUTH BOX */}
-        <div className="bg-[#121216]/95 border border-white/10 rounded-[28px] p-6 shadow-2xl relative overflow-hidden">
-          {/* Top gloss */}
-          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-amber-500 via-yellow-400 to-yellow-600" />
+        <div className="bg-[#0b0b12]/90 backdrop-blur-2xl border border-white/5 rounded-[32px] p-7 shadow-2xl relative">
+          <div className="absolute top-0 inset-x-8 h-[1px] bg-gradient-to-r from-transparent via-amber-400/50 to-transparent" />
 
-          <h3 className="text-lg font-black text-slate-100 uppercase tracking-wide mb-1.5 text-left">
-            {isLogin ? 'Welcome Back!' : 'Create Account'}
-          </h3>
-          <p className="text-xs text-white/40 text-left mb-5">
-            {isLogin
-              ? 'Provide your phone number to access premium multi-games.'
-              : 'Add accurate details to prevent withdrawal claim rejection.'}
-          </p>
+          <div className="text-left mb-6">
+             <h3 className="text-xl font-black text-white uppercase tracking-wider">
+               {isLogin ? 'SECURE LOGIN' : 'CREATE ACCOUNT'}
+             </h3>
+             <p className="text-[11px] font-semibold text-white/40 mt-1.5 leading-relaxed">
+               {isLogin
+                 ? 'Access your unified Goaltube dashboard and earn premium rewards instantly.'
+                 : 'Register one account per device. Duplicate accounts will be automatically banned.'}
+             </p>
+          </div>
 
           {/* Feedback alerts */}
           {error && (
-            <div className="bg-red-500/10 border border-red-500/20 p-3 rounded-2xl flex items-center gap-2 mb-4 text-left">
-              <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
-              <span className="text-[10px] text-red-300 font-bold leading-normal">{error}</span>
+            <div className="bg-red-500/10 border border-red-500/20 p-3.5 rounded-2xl flex items-start gap-2 mb-5 text-left shadow-inner">
+              <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+              <span className="text-[11px] text-red-300 font-bold leading-normal">{error}</span>
             </div>
           )}
 
           <form onSubmit={handleAuthSubmit} className="space-y-4 text-left">
             {!isLogin && (
-              <div className="space-y-1">
-                <label className="text-[10px] tracking-wider text-white/50 uppercase font-black">Full Name</label>
-                <div className="relative">
-                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+              <div className="space-y-1.5">
+                <label className="text-[9px] tracking-widest text-white/40 uppercase font-bold pl-1">Full Name</label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <User className="w-4 h-4 text-slate-500 group-focus-within:text-amber-400 transition-colors" />
+                  </div>
                   <input
                     type="text"
                     required
-                    placeholder="Enter your real full name"
+                    placeholder="E.g. Sayed Islam"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full bg-[#0A0A0C] border border-white/5 rounded-2xl pl-11 pr-4 py-3 text-slate-200 text-xs font-semibold focus:border-amber-500 outline-none transition-all"
+                    className="w-full bg-[#15151a] border border-white/5 rounded-2xl pl-11 pr-4 py-3.5 text-slate-100 text-[13px] font-semibold focus:border-amber-500 focus:bg-[#1a1a24] outline-none transition-all shadow-inner"
                   />
                 </div>
               </div>
             )}
 
-            <div className="space-y-1">
-              <label className="text-[10px] tracking-wider text-white/50 uppercase font-black">Phone Number</label>
-              <div className="relative">
-                <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+            <div className="space-y-1.5">
+              <label className="text-[9px] tracking-widest text-white/40 uppercase font-bold pl-1">Phone Number</label>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <Phone className="w-4 h-4 text-slate-500 group-focus-within:text-amber-400 transition-colors" />
+                </div>
                 <input
-                  type="text"
+                  type="tel"
                   required
-                  placeholder="e.g. 017XXXXXXXX"
+                  placeholder="017XXXXXXXX"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="w-full bg-[#0A0A0C] border border-white/5 rounded-2xl pl-11 pr-4 py-3 text-slate-200 text-xs font-semibold focus:border-amber-500 font-mono outline-none transition-all"
+                  className="w-full bg-[#15151a] border border-white/5 rounded-2xl pl-11 pr-4 py-3.5 text-slate-100 text-[13px] font-semibold focus:border-amber-500 focus:bg-[#1a1a24] outline-none transition-all font-mono shadow-inner"
                 />
               </div>
             </div>
 
             {!isLogin && (
               <>
-                <div className="space-y-1">
-                  <label className="text-[10px] tracking-wider text-white/50 uppercase font-black">Email Address (Optional)</label>
-                  <div className="relative">
-                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                    <input
-                      type="email"
-                      placeholder="e.g. sayed@example.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="w-full bg-[#0A0A0C] border border-white/5 rounded-2xl pl-11 pr-4 py-3 text-slate-200 text-xs font-semibold focus:border-amber-500 outline-none transition-all"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[10px] tracking-wider text-white/50 uppercase font-black">Telegram Handle / Code</label>
-                  <div className="relative">
-                    <Send className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                <div className="space-y-1.5">
+                  <label className="text-[9px] tracking-widest text-white/40 uppercase font-bold pl-1">Telegram / Social Handle</label>
+                  <div className="relative group">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                      <Send className="w-4 h-4 text-slate-500 group-focus-within:text-amber-400 transition-colors" />
+                    </div>
                     <input
                       type="text"
-                      placeholder="e.g. @sayed_pro"
+                      placeholder="@username"
                       value={tgHandle}
                       onChange={(e) => setTgHandle(e.target.value)}
-                      className="w-full bg-[#0A0A0C] border border-white/5 rounded-2xl pl-11 pr-4 py-3 text-slate-200 text-xs font-semibold focus:border-amber-500 outline-none transition-all font-mono"
+                      className="w-full bg-[#15151a] border border-white/5 rounded-2xl pl-11 pr-4 py-3.5 text-slate-100 text-[13px] font-semibold focus:border-amber-500 focus:bg-[#1a1a24] outline-none transition-all font-mono shadow-inner"
                     />
                   </div>
                 </div>
               </>
             )}
 
-            <div className="space-y-1">
-              <label className="text-[10px] tracking-wider text-white/50 uppercase font-black">Password</label>
-              <div className="relative">
-                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+            <div className="space-y-1.5">
+              <label className="text-[9px] tracking-widest text-white/40 uppercase font-bold pl-1">Secure Password</label>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <Lock className="w-4 h-4 text-slate-500 group-focus-within:text-amber-400 transition-colors" />
+                </div>
                 <input
                   type="password"
                   required
-                  placeholder="Enter secure password"
+                  placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-[#0A0A0C] border border-white/5 rounded-2xl pl-11 pr-4 py-3 text-slate-200 text-xs font-semibold focus:border-amber-500 outline-none transition-all"
+                  className="w-full bg-[#15151a] border border-white/5 rounded-2xl pl-11 pr-4 py-3.5 text-slate-100 text-[13px] font-semibold focus:border-amber-500 focus:bg-[#1a1a24] outline-none transition-all shadow-inner tracking-widest"
                 />
               </div>
             </div>
 
             {!isLogin && (
-              <div className="space-y-1">
-                <label className="text-[10px] tracking-wider text-white/50 uppercase font-black">Confirm Password</label>
-                <div className="relative">
-                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+              <div className="space-y-1.5">
+                <label className="text-[9px] tracking-widest text-white/40 uppercase font-bold pl-1">Confirm Password</label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <CheckCircle2 className="w-4 h-4 text-slate-500 group-focus-within:text-amber-400 transition-colors" />
+                  </div>
                   <input
                     type="password"
                     required
-                    placeholder="Confirm secure password"
+                    placeholder="••••••••"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full bg-[#0A0A0C] border border-white/5 rounded-2xl pl-11 pr-4 py-3 text-slate-200 text-xs font-semibold focus:border-amber-500 outline-none transition-all"
+                    className="w-full bg-[#15151a] border border-white/5 rounded-2xl pl-11 pr-4 py-3.5 text-slate-100 text-[13px] font-semibold focus:border-amber-500 focus:bg-[#1a1a24] outline-none transition-all shadow-inner tracking-widest"
                   />
                 </div>
               </div>
@@ -347,39 +403,47 @@ export default function Auth({ onLoginSuccess }: AuthProps) {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 hover:from-amber-400 hover:to-amber-500 disabled:opacity-50 text-slate-950 font-black text-xs uppercase tracking-widest rounded-2xl cursor-pointer transition-all active:scale-[0.98] shadow-lg shadow-amber-500/10 flex items-center justify-center gap-1.5"
+              className="w-full relative py-4 rounded-2xl overflow-hidden group cursor-pointer active:scale-95 transition-all shadow-[0_0_20px_rgba(251,191,36,0.15)] mt-3"
             >
-              {loading ? (
-                <>
-                  <Loader2 className="w-4 h-4 text-slate-950 animate-spin" />
-                  Processing...
-                </>
-              ) : isLogin ? (
-                'Secure Log In'
-              ) : (
-                'Register Account'
-              )}
+              <div className="absolute inset-0 bg-gradient-to-b from-amber-400 to-amber-600 group-hover:from-amber-300 group-hover:to-amber-500 transition-colors" />
+              <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-30 mix-blend-overlay pointer-events-none" />
+              <div className="relative z-10 flex items-center justify-center gap-2">
+                 {loading ? (
+                   <>
+                     <Loader2 className="w-4 h-4 text-amber-950 animate-spin" />
+                     <span className="text-amber-950 font-black text-xs uppercase tracking-widest drop-shadow-sm">Processing...</span>
+                   </>
+                 ) : (
+                   <span className="text-amber-950 font-black text-xs uppercase tracking-widest drop-shadow-sm flex items-center gap-2">
+                     {isLogin ? <Lock className="w-3.5 h-3.5" /> : <User className="w-3.5 h-3.5" />}
+                     {isLogin ? 'Secure Authenticate' : 'Register System'}
+                   </span>
+                 )}
+              </div>
             </button>
           </form>
 
           {/* Toggle link */}
-          <div className="mt-5 text-center">
+          <div className="mt-6 text-center">
             <button
               onClick={() => {
                 setIsLogin(!isLogin);
                 setError(null);
+                setPhone('');
+                setPassword('');
+                setConfirmPassword('');
               }}
-              className="text-[10px] tracking-wide font-extrabold text-amber-400 uppercase hover:text-amber-300 cursor-pointer"
+              className="text-[10px] tracking-wider font-bold text-slate-400 uppercase hover:text-amber-400 cursor-pointer transition-colors"
             >
-              {isLogin ? "DON'T HAVE AN ACCOUNT? REGISTER" : 'ALREADY REGISTERED? LOG IN'}
+              {isLogin ? "New user? Create a profile" : 'Already have an account? Log In'}
             </button>
           </div>
         </div>
 
         {/* SECURE MARK */}
-        <div className="mt-6 flex items-center justify-center gap-1.5 text-white/20 text-[9px] font-bold uppercase tracking-widest">
-          <Shield className="w-3.5 h-3.5 text-amber-500/30" />
-          <span>GOALTUBE BD SECURE SYSTEM SECURITY LICENSE v1.02</span>
+        <div className="mt-8 flex items-center justify-center gap-2 text-white/20 text-[9px] font-bold uppercase tracking-widest mb-10">
+          <Shield className="w-4 h-4 text-emerald-500/40" />
+          <span>GOALTUBE SECURE PRO v1.05 &copy; 2026</span>
         </div>
       </div>
     </div>

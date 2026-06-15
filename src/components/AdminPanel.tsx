@@ -82,10 +82,13 @@ export default function AdminPanel({
   // Sidebar Controls
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'resource_center' | 'settings' | 'toggles'>('dashboard');
+  const [currentFolder, setCurrentFolder] = useState<'' | 'category' | 'gameToggles' | 'gameLogos'>('');
+  const [gameLogoPrompt, setGameLogoPrompt] = useState<{id: string, name: string} | null>(null);
+  const [gameLogoUrl, setGameLogoUrl] = useState('');
 
   // Resource Center Subpages
   const [resSubPage, setResSubPage] = useState<'none' | 'control_center' | 'transactions'>('none');
-  const [controlCenterPage, setControlCenterPage] = useState<'none' | 'tasks' | 'payments' | 'support'>('none');
+  const [controlCenterPage, setControlCenterPage] = useState<'none' | 'tasks' | 'payments' | 'coin_config' | 'support'>('none');
 
   // Core Data Lists
   const [allUsers, setAllUsers] = useState<User[]>([]);
@@ -1051,7 +1054,7 @@ export default function AdminPanel({
   });
 
   return (
-    <div className="w-full min-h-screen bg-[#0A0A0C] text-slate-100 flex flex-col relative pb-10">
+    <div className="w-full min-h-screen bg-[#0f0f1a] text-slate-100 flex flex-col relative pb-10">
       {/* Top Action & Navigation Bar */}
       <div className="flex items-center justify-between border-b border-white/5 pb-3 px-4 pt-1 mb-4 z-20">
         <div className="flex items-center gap-2.5">
@@ -1555,62 +1558,62 @@ export default function AdminPanel({
         {/* ======================= TAB 3: RESOURCE CENTER ======================= */}
         {activeTab === 'resource_center' && resSubPage === 'none' && (
           <div className="space-y-4">
-            <h3 className="text-xs font-black tracking-wider text-indigo-400 uppercase text-left">Support Desk & Sponsor Resource Center</h3>
+            <h3 className="text-xl font-bold tracking-tight text-white flex items-center gap-2 mb-5">
+              <div className="w-8 h-8 flex items-center justify-center rounded-xl bg-yellow-500/10 text-yellow-500"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 01-2 2z"></path></svg></div>
+              Resource Center
+            </h3>
             
-            <div className="space-y-2.5">
+            <div className="space-y-3.5">
               <button
-                onClick={() => alert('Toggle Manager: This setting is managed internally through cloud triggers.')}
-                className="w-full p-4 bg-[#121216] border border-white/10 rounded-3xl text-left hover:border-indigo-500/30 transition-all flex items-center justify-between group cursor-pointer"
+                onClick={() => setActiveTab('toggles')}
+                className="w-full p-5 rounded-[20px] text-left transition-all duration-300 flex items-center gap-4 cursor-pointer hover:-translate-y-1 hover:shadow-[0_12px_30px_rgba(0,0,0,0.5)] active:scale-95 group"
+                style={{ background: 'linear-gradient(135deg, #1e3a5f 0%, #0f1a2e 100%)', border: '1px solid #3b82f6' }}
               >
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-indigo-500/10 text-indigo-400 rounded-2xl group-hover:bg-indigo-600 group-hover:text-white transition-all">
-                    <Eye className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-black text-slate-100">Toggle Manager (Live State)</h4>
-                    <span className="text-[9px] text-white/30 block">Pause task firewalls or screenshot proofs upload globally</span>
-                  </div>
+                <div className="w-14 h-14 rounded-[18px] shrink-0 flex items-center justify-center" style={{ background: 'rgba(59,130,246,0.2)', color: '#3b82f6' }}>
+                  <ToggleRight className="w-7 h-7" />
                 </div>
-                <span className="text-[8px] bg-indigo-500/20 text-indigo-300 font-mono px-2 py-0.5 rounded font-bold uppercase tracking-wider">Coming Soon</span>
-              </button>
-
-              <button
-                onClick={() => { setResSubPage('control_center'); setControlCenterPage('none'); }}
-                className="w-full p-4 bg-[#121216] border border-white/10 rounded-3xl text-left hover:border-emerald-500/30 transition-all flex items-center justify-between group cursor-pointer"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-emerald-500/10 text-[#10b981] rounded-2xl group-hover:bg-[#10b981] group-hover:text-white transition-all">
-                    <Settings className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-black text-slate-100">Control Center (Live Presets)</h4>
-                    <span className="text-[9px] text-white/30 block">Sponsor tasks, payout methods, and game settings</span>
-                  </div>
+                <div className="flex-1">
+                  <h4 className="text-base font-semibold text-white">Toggle Manager</h4>
+                  <p className="text-xs text-gray-400 mt-1">Category, Game Toggles & Logos</p>
                 </div>
-                <ChevronRight className="w-4 h-4 text-white/20 group-hover:text-white/40 transition-colors" />
+                <ChevronRight className="w-5 h-5 text-blue-400 opacity-60 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
               </button>
 
               <button
                 onClick={() => { setResSubPage('transactions'); setTransTab('submissions'); }}
-                className="w-full p-4 bg-[#121216] border border-white/10 rounded-3xl text-left hover:border-purple-500/30 transition-all flex items-center justify-between group cursor-pointer"
+                className="w-full p-5 rounded-[20px] text-left transition-all duration-300 flex items-center gap-4 cursor-pointer hover:-translate-y-1 hover:shadow-[0_12px_30px_rgba(0,0,0,0.5)] active:scale-95 group"
+                style={{ background: 'linear-gradient(135deg, #3d2e0a 0%, #1a1405 100%)', border: '1px solid #f59e0b' }}
               >
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-purple-500/10 text-purple-400 rounded-2xl group-hover:bg-purple-600 group-hover:text-white transition-all">
-                    <Landmark className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-black text-slate-100 flex items-center gap-2">
-                      <span>Transactions (Payouts & Proofs)</span>
-                      {pendingSubCount > 0 && (
-                        <span className="px-1.5 py-0.5 bg-red-650/90 text-[8.5px] font-mono font-black text-white rounded-lg animate-pulse">
-                          {pendingSubCount} PENDING
-                        </span>
-                      )}
-                    </h4>
-                    <span className="text-[9px] text-white/30 block">Verification and user screenshot approvals</span>
-                  </div>
+                <div className="w-14 h-14 rounded-[18px] shrink-0 flex items-center justify-center" style={{ background: 'rgba(245,158,11,0.2)', color: '#f59e0b' }}>
+                  <Landmark className="w-7 h-7" />
                 </div>
-                <ChevronRight className="w-4 h-4 text-white/20 group-hover:text-white/40 transition-colors" />
+                <div className="flex-1">
+                  <h4 className="text-base font-semibold text-white flex items-center gap-2">
+                    Transactions
+                    {pendingSubCount > 0 && (
+                      <span className="px-2 py-0.5 bg-red-650/90 text-[9px] font-mono font-black text-white rounded-lg animate-pulse">
+                        {pendingSubCount} PENDING
+                      </span>
+                    )}
+                  </h4>
+                  <p className="text-xs text-gray-400 mt-1">Withdrawals & Submissions</p>
+                </div>
+                <ChevronRight className="w-5 h-5 text-yellow-400 opacity-60 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+              </button>
+
+              <button
+                onClick={() => { setResSubPage('control_center'); setControlCenterPage('none'); }}
+                className="w-full p-5 rounded-[20px] text-left transition-all duration-300 flex items-center gap-4 cursor-pointer hover:-translate-y-1 hover:shadow-[0_12px_30px_rgba(0,0,0,0.5)] active:scale-95 group"
+                style={{ background: 'linear-gradient(135deg, #0f2e1a 0%, #051a0d 100%)', border: '1px solid #10b981' }}
+              >
+                <div className="w-14 h-14 rounded-[18px] shrink-0 flex items-center justify-center" style={{ background: 'rgba(16,185,129,0.2)', color: '#10b981' }}>
+                  <Settings className="w-7 h-7" />
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-base font-semibold text-white">Control Center</h4>
+                  <p className="text-xs text-gray-400 mt-1">Tasks, Payments, Quiz, Games & More</p>
+                </div>
+                <ChevronRight className="w-5 h-5 text-green-400 opacity-60 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
               </button>
             </div>
           </div>
@@ -3259,51 +3262,149 @@ export default function AdminPanel({
         {/* ======================= TAB: TOGGLE MANAGER ======================= */}
         {activeTab === 'toggles' && (
           <div className="space-y-4">
-            <h3 className="text-xs font-black tracking-wider text-indigo-400 uppercase text-left flex items-center gap-2">
-              <ToggleRight className="w-4 h-4 text-indigo-500" /> Toggle Manager
+            <h3 className="text-sm font-bold text-white text-left flex items-center gap-2 mb-4">
+              <ToggleRight className="w-5 h-5 text-blue-500" /> Toggle Manager
             </h3>
             
-            <div className="bg-[#121216] border border-white/5 p-4 rounded-3xl shadow-xl">
-               <p className="text-[10px] text-white/40 mb-4 leading-normal">
-                 Enable or disable specific user-facing sections dynamically. Settings are applied in real-time.
-               </p>
+            {!currentFolder ? (
+              <div className="space-y-3">
+                 <button onClick={() => setCurrentFolder('category')} className="w-full p-4 bg-[#111827] border border-gray-800 rounded-xl text-white font-medium text-sm flex items-center justify-between hover:bg-[#1f2937] hover:border-blue-500 transition-all">
+                   <div className="flex items-center gap-3">
+                     <div className="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center"><LayoutGrid className="w-4 h-4" /></div>
+                     Category Toggles
+                   </div>
+                   <ChevronRight className="w-4 h-4 text-gray-500" />
+                 </button>
+                 
+                 <button onClick={() => setCurrentFolder('gameToggles')} className="w-full p-4 bg-[#111827] border border-gray-800 rounded-xl text-white font-medium text-sm flex items-center justify-between hover:bg-[#1f2937] hover:border-teal-500 transition-all">
+                   <div className="flex items-center gap-3">
+                     <div className="w-8 h-8 rounded-lg bg-teal-500/20 text-teal-400 flex items-center justify-center"><Gamepad2 className="w-4 h-4" /></div>
+                     Game Toggles
+                   </div>
+                   <ChevronRight className="w-4 h-4 text-gray-500" />
+                 </button>
+                 
+                 <button onClick={() => setCurrentFolder('gameLogos')} className="w-full p-4 bg-[#111827] border border-gray-800 rounded-xl text-white font-medium text-sm flex items-center justify-between hover:bg-[#1f2937] hover:border-pink-500 transition-all">
+                   <div className="flex items-center gap-3">
+                     <div className="w-8 h-8 rounded-lg bg-pink-500/20 text-pink-400 flex items-center justify-center"><Image className="w-4 h-4" /></div>
+                     All Game Logo
+                   </div>
+                   <ChevronRight className="w-4 h-4 text-gray-500" />
+                 </button>
+              </div>
+            ) : (
+               <div className="bg-[#111827] border border-gray-800 p-4 rounded-2xl shadow-xl">
+                 <div className="flex items-center gap-2 mb-4 text-gray-400 cursor-pointer" onClick={() => setCurrentFolder('')}>
+                   <ArrowLeft className="w-4 h-4" /> <span className="text-sm">Back</span>
+                 </div>
+                 
+                 {currentFolder === 'category' && (
+                   <div className="space-y-3">
+                     <h4 className="text-white font-bold mb-4">Category Toggles</h4>
+                     {[
+                       { id: 'watch', name: 'Watch Task' },
+                       { id: 'visit', name: 'Visit Task' },
+                       { id: 'post', name: 'Post Task' },
+                       { id: 'registration', name: 'Registration Task' },
+                       { id: 'joined', name: 'Joined Task' },
+                       { id: 'upcoming', name: 'Upcoming Task' },
+                     ].map(cat => {
+                        const conf = JSON.parse(localStorage.getItem('__taskx_cat_toggles') || '{}');
+                        const isActive = conf[cat.id] !== false;
+                        return (
+                          <div key={cat.id} className="flex justify-between items-center p-3 bg-gray-800 rounded-xl">
+                            <span className="text-sm text-white">{cat.name}</span>
+                            <button onClick={() => {
+                               conf[cat.id] = !isActive;
+                               localStorage.setItem('__taskx_cat_toggles', JSON.stringify(conf));
+                               setActiveTab('dashboard'); setTimeout(() => setActiveTab('toggles'), 10);
+                            }} className={`w-10 h-5 rounded-full relative transition-colors ${isActive ? 'bg-blue-500' : 'bg-gray-600'}`}>
+                               <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${isActive ? 'left-[1.3rem]' : 'left-0.5'}`} />
+                            </button>
+                          </div>
+                        )
+                     })}
+                   </div>
+                 )}
 
-               <div className="space-y-3">
-                 {[
-                   { key: 'showCategories', label: 'Category Toggles', icon: LayoutGrid, hint: 'Toggle visibility of task and apps categories.' },
-                   { key: 'showGames', label: 'Game Toggles', icon: Gamepad2, hint: 'Toggle visibility of Quick Launch premium games section.' },
-                   { key: 'showGameLogos', label: 'All Game Logo', icon: Image, hint: 'Toggle visibility of game graphical icons in lists.' }
-                 ].map(item => {
-                    const isActive = JSON.parse(localStorage.getItem('__admin_toggles_config') || '{}')[item.key] !== false;
-                    return (
-                      <div key={item.key} className="flex items-center justify-between p-4 bg-[#0A0A0C] border border-white/5 rounded-2xl">
-                        <div className="flex items-start gap-3">
-                           <div className={`p-2 rounded-xl border ${isActive ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400' : 'bg-white/5 border-white/10 text-slate-500'}`}>
-                             <item.icon className="w-4 h-4" />
-                           </div>
-                           <div>
-                             <h4 className="text-xs font-black text-slate-200">{item.label}</h4>
-                             <p className="text-[9px] text-white/30 tracking-tight mt-0.5">{item.hint}</p>
-                           </div>
-                        </div>
-                        <button 
-                           onClick={() => {
-                              const conf = JSON.parse(localStorage.getItem('__admin_toggles_config') || '{}');
-                              conf[item.key] = isActive ? false : true;
-                              localStorage.setItem('__admin_toggles_config', JSON.stringify(conf));
-                              // force re-render trick
-                              setActiveTab('dashboard'); 
-                              setTimeout(() => setActiveTab('toggles'), 10);
-                           }}
-                           className={`w-12 h-6 rounded-full relative transition-colors ${isActive ? 'bg-indigo-600' : 'bg-slate-700'}`}
-                        >
-                           <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm transition-all ${isActive ? 'left-7' : 'left-1'}`} />
-                        </button>
-                      </div>
-                    )
-                 })}
+                 {currentFolder === 'gameToggles' && (
+                   <div className="space-y-3">
+                     <h4 className="text-white font-bold mb-4">Game Toggles</h4>
+                     <p className="text-xs text-gray-400 mb-3">Turn ON/OFF games for users</p>
+                     {[
+                       { id: 'mining', name: 'VIP Rocket Crash' },
+                       { id: 'coin', name: 'Coin Multiplier' },
+                       { id: 'slot', name: 'Golden Slots' },
+                       { id: 'spin', name: 'Spin Multiplier' },
+                       { id: 'plinko', name: 'Mega Plinko' },
+                       { id: 'color', name: 'Color Match' },
+                       { id: 'memory', name: 'Memory Matrix' },
+                       { id: 'ttt', name: 'TicTacToe' },
+                       { id: 'match3', name: 'Match-3 Quest' },
+                       { id: 'luckybox', name: 'Loot Box' },
+                       { id: 'quiz', name: 'Trivia Quiz' },
+                       { id: 'rps', name: 'Rock Paper Scissors' },
+                       { id: 'ad', name: 'Watch Ads' },
+                     ].map(game => {
+                        const conf = JSON.parse(localStorage.getItem('__taskx_game_toggles') || '{}');
+                        const isActive = conf[game.id] !== false;
+                        return (
+                          <div key={game.id} className="flex justify-between items-center p-3 bg-gray-800 rounded-xl">
+                            <span className="text-sm text-white flex items-center gap-2"><Gamepad2 className="w-4 h-4 text-teal-400" /> {game.name}</span>
+                            <button onClick={() => {
+                               conf[game.id] = !isActive;
+                               localStorage.setItem('__taskx_game_toggles', JSON.stringify(conf));
+                               setActiveTab('dashboard'); setTimeout(() => setActiveTab('toggles'), 10);
+                            }} className={`w-10 h-5 rounded-full relative transition-colors ${isActive ? 'bg-blue-500' : 'bg-gray-600'}`}>
+                               <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${isActive ? 'left-[1.3rem]' : 'left-0.5'}`} />
+                            </button>
+                          </div>
+                        )
+                     })}
+                   </div>
+                 )}
+
+                 {currentFolder === 'gameLogos' && (
+                   <div className="space-y-3">
+                     <h4 className="text-white font-bold mb-4">All Game Logo</h4>
+                     <p className="text-xs text-gray-400 mb-3">Update your game icons.</p>
+                     {[
+                       { id: 'mining', name: 'VIP Rocket Crash' },
+                       { id: 'coin', name: 'Coin Multiplier' },
+                       { id: 'slot', name: 'Golden Slots' },
+                       { id: 'spin', name: 'Spin Multiplier' },
+                       { id: 'plinko', name: 'Mega Plinko' },
+                       { id: 'color', name: 'Color Match' },
+                       { id: 'memory', name: 'Memory Matrix' },
+                       { id: 'ttt', name: 'TicTacToe' },
+                       { id: 'match3', name: 'Match-3 Quest' },
+                       { id: 'luckybox', name: 'Loot Box' },
+                       { id: 'quiz', name: 'Trivia Quiz' },
+                       { id: 'rps', name: 'Rock Paper Scissors' },
+                       { id: 'ad', name: 'Watch Ads' },
+                     ].map(game => {
+                        const customLogo = JSON.parse(localStorage.getItem('__taskx_game_logos') || '{}')[game.id];
+                        return (
+                          <div key={game.id} className="flex justify-between items-center p-3 bg-gray-800 rounded-xl">
+                            <span className="text-sm text-white flex items-center gap-2">
+                               {customLogo ? (
+                                  <img src={customLogo} alt="" className="w-8 h-8 rounded object-cover" />
+                               ) : (
+                                  <div className="w-8 h-8 bg-blue-500/20 rounded flex items-center justify-center text-blue-400"><Image className="w-4 h-4" /></div>
+                               )}
+                               {game.name}
+                            </span>
+                            <button onClick={() => {
+                               setGameLogoPrompt({ id: game.id, name: game.name });
+                               setGameLogoUrl(customLogo || '');
+                            }} className="px-3 py-1.5 bg-blue-600 text-white text-xs rounded-lg">Edit</button>
+                          </div>
+                        )
+                     })}
+                   </div>
+                 )}
                </div>
-            </div>
+            )}
           </div>
         )}
 
@@ -3556,6 +3657,59 @@ export default function AdminPanel({
                   className="flex-1 py-3 px-4 bg-red-600 hover:bg-red-500 rounded-xl text-white font-black text-xs shadow-lg shadow-red-600/20 transition-colors"
                 >
                   Yes, Proceed
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* CUSTOM PROMPT FOR GAME LOGO */}
+      <AnimatePresence>
+        {gameLogoPrompt && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm shadow-2xl"
+          >
+            <motion.div
+              initial={{ scale: 0.95 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.95 }}
+              className="bg-[#121216] border border-white/10 p-5 rounded-3xl w-full max-w-sm"
+            >
+              <h3 className="text-white font-bold text-lg mb-2">Update Logo</h3>
+              <p className="text-slate-400 text-xs mb-4">Enter a valid Image URL for {gameLogoPrompt.name}</p>
+              
+              <input 
+                type="text" 
+                value={gameLogoUrl}
+                onChange={(e) => setGameLogoUrl(e.target.value)}
+                placeholder="https://..."
+                className="w-full bg-[#0a0a0c] border border-white/10 rounded-xl px-4 py-3 text-white mb-4 text-sm focus:border-blue-500 transition-colors"
+                autoFocus
+              />
+
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => setGameLogoPrompt(null)}
+                  className="flex-1 py-3 rounded-xl bg-[#2a2a35] text-white font-bold text-sm hover:bg-[#3a3a45] transition-colors"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={() => {
+                    const conf = JSON.parse(localStorage.getItem('__taskx_game_logos') || '{}');
+                    conf[gameLogoPrompt.id] = gameLogoUrl;
+                    localStorage.setItem('__taskx_game_logos', JSON.stringify(conf));
+                    setGameLogoPrompt(null);
+                    // trigger re-render
+                    setActiveTab('dashboard'); setTimeout(() => setActiveTab('toggles'), 10);
+                  }}
+                  className="flex-1 py-3 rounded-xl bg-blue-600 text-white font-bold text-sm hover:bg-blue-500 transition-colors shadow-lg shadow-blue-500/20"
+                >
+                  Save URL
                 </button>
               </div>
             </motion.div>
