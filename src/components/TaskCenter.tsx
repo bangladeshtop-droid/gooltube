@@ -427,6 +427,7 @@ export default function TaskCenter({
             exit={{ opacity: 0 }}
           >
             {/* Category selector row */}
+            {JSON.parse(localStorage.getItem('__admin_toggles_config') || '{}').showCategories !== false && (
             <div className="flex gap-1.5 bg-[#121216]/60 border border-white/5 p-1 rounded-xl mb-4 overflow-x-auto scrollable py-1.5 shadow-inner">
               {[
                 { id: 'watch', label: 'Watch' },
@@ -449,6 +450,7 @@ export default function TaskCenter({
                 </button>
               ))}
             </div>
+            )}
 
             {/* Task list Feed */}
             <div className="space-y-3.5">

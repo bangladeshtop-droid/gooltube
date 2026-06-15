@@ -15,6 +15,10 @@ import {
   FileText,
   ShieldAlert,
   Film,
+  Activity,
+  Cpu,
+  Download,
+  ChevronRight,
 } from 'lucide-react';
 import { User, Task, AppNotification, Transaction, GameID } from './types';
 import BottomNavBar from './components/BottomNavBar';
@@ -120,6 +124,22 @@ export default function App() {
   const [homeAdSlotCooldowns, setHomeAdSlotCooldowns] = useState<{[key: number]: number}>({1: 0, 2: 0, 3: 0, 4: 0});
   const [activeAdSlotWatch, setActiveAdSlotWatch] = useState<number | null>(null);
   const [activeAdSlotSeconds, setActiveAdSlotSeconds] = useState<number>(0);
+
+  // Admin Toggles Configuration
+  const [adminToggles, setAdminToggles] = useState({
+    showCategories: true,
+    showGames: true,
+    showGameLogos: true,
+  });
+
+  useEffect(() => {
+    const saved = localStorage.getItem('__admin_toggles_config');
+    if (saved) {
+      try {
+        setAdminToggles(JSON.parse(saved));
+      } catch (e) {}
+    }
+  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -883,32 +903,46 @@ export default function App() {
                         <div
                           key={slotIdx}
                           onClick={() => cooldown === 0 && triggerHomeAdSlotWatch(slotIdx)}
-                          className={`relative border rounded-3xl p-4 flex flex-col items-center justify-center text-center transition-all duration-200 select-none ${
+                          className={`relative rounded-[20px] overflow-hidden flex flex-col transition-all duration-300 select-none ${
                             cooldown > 0
-                              ? 'bg-[#121216]/60 border-white/5 opacity-50 cursor-not-allowed'
-                              : 'bg-[#141418] border-white/5 hover:border-indigo-500/30 hover:scale-[1.02] cursor-pointer shadow-lg active:scale-98'
+                              ? 'bg-[#101014] border border-white/5 opacity-60 cursor-not-allowed grayscale'
+                              : 'bg-gradient-to-b from-[#1c1c24] to-[#121216] border border-indigo-500/20 hover:border-indigo-500/50 hover:-translate-y-1 cursor-pointer shadow-[0_8px_30px_rgba(79,70,229,0.15)] active:scale-95 group'
                           }`}
                         >
                           {cooldown > 0 && (
-                            <span className="absolute top-2.5 right-2.5 text-[7px] bg-white/5 font-mono px-1.5 py-0.5 rounded text-white/40 block">
-                              COOLDOWN
-                            </span>
+                            <div className="absolute inset-x-0 top-0 h-1 bg-white/5" />
                           )}
-                          <div className={`p-2.5 rounded-full mb-2 ${
-                            cooldown > 0 ? 'bg-white/5 text-white/20' : 'bg-indigo-500/10 text-indigo-400'
-                          }`}>
-                            <Film className="w-5 h-5" />
+                          {!cooldown && (
+                            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-amber-400 opacity-50 group-hover:opacity-100 transition-opacity" />
+                          )}
+                          
+                          {/* Ad Image / Visual Layer */}
+                          <div className="h-16 w-full relative bg-[#0a0a0c] flex items-center justify-center overflow-hidden">
+                            {cooldown > 0 ? (
+                               <div className="absolute inset-0 bg-white/5 flex items-center justify-center backdrop-blur-sm z-10">
+                                  <span className="text-[10px] font-black tracking-widest text-white/50 bg-black/50 px-3 py-1 rounded-full backdrop-blur-md border border-white/10 uppercase">
+                                    WAIT {cooldown}s
+                                  </span>
+                               </div>
+                            ) : (
+                              <>
+                                 <div className="absolute inset-0 bg-indigo-500/10 group-hover:bg-indigo-500/20 transition-colors" />
+                                 <div className="absolute -inset-4 bg-[url('https://images.unsplash.com/photo-1614064016738-4f81016cd0c8?w=300&q=80')] bg-cover bg-center opacity-20 filter blur-sm group-hover:scale-110 group-hover:opacity-40 transition-all duration-700" />
+                              </>
+                            )}
+                            <Film className={`w-6 h-6 object-cover z-20 ${cooldown > 0 ? 'text-white/20' : 'text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)] group-hover:scale-110 transition-transform'}`} />
                           </div>
-                          <h5 className="text-[10.5px] font-black text-slate-200">Sponsor Ad #{slotIdx}</h5>
-                          {cooldown > 0 ? (
-                            <span className="text-[9px] text-[#ffb020] font-mono font-bold mt-1.5 block">
-                              Ready in {cooldown}s
-                            </span>
-                          ) : (
-                            <span className="text-[8.5px] text-white/35 block mt-1.5 hover:text-indigo-400 transition-colors">
-                              Watch to Earn 🪙
-                            </span>
-                          )}
+                          
+                          <div className="p-3 text-center flex flex-col justify-center relative z-10 border-t border-white/5 bg-[#121216]/80 backdrop-blur">
+                            <h5 className="text-[11px] font-black text-slate-100 uppercase tracking-wide">Sponsored Ad #{slotIdx}</h5>
+                            {cooldown > 0 ? (
+                               <span className="text-[9px] text-[#ffb020] font-mono font-bold mt-1 block">Cooldown active</span>
+                            ) : (
+                               <span className="text-[9.5px] text-indigo-300 font-bold mt-1 flex items-center justify-center gap-1">
+                                 Watch Ad <ChevronRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+                               </span>
+                            )}
+                          </div>
                         </div>
                       );
                     })}
@@ -933,65 +967,100 @@ export default function App() {
                 </div>
 
                 {/* ACTIVE MINER ENGINES (Moved to Games page) */}
-                <div className="bg-[#141418] border border-white/5 rounded-3xl p-5 shadow-[0_12px_40px_rgba(0,0,0,0.5)] flex flex-col items-center justify-center text-center relative overflow-hidden">
-                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 via-amber-400 to-indigo-500 animate-pulse" />
-                  
-                  <div className="w-16 h-16 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mb-3.5 relative">
-                    <span className="absolute inset-0 rounded-full border border-indigo-500/25 border-t-transparent animate-spin" />
-                    <Hammer className={`w-7 h-7 text-indigo-400 ${user.miningStartTime > 0 ? 'animate-bounce' : ''}`} />
+                <div className="relative group rounded-3xl overflow-hidden p-[1px]">
+                  <div className={`absolute inset-0 bg-gradient-to-b ${user.miningStartTime > 0 ? 'from-indigo-500/50 via-amber-400/20 to-transparent animate-pulse' : 'from-slate-700/50 to-transparent'}`} />
+                  <div className="bg-[#0b0b0f] relative rounded-[23px] p-6 shadow-2xl flex flex-col items-center justify-center text-center overflow-hidden h-full z-10 font-sans border border-white/5 backdrop-blur-xl">
+                    <div className="absolute top-0 inset-x-0 h-[100px] bg-indigo-500/10 blur-[50px] -z-10" />
+                    
+                    {/* Visual CPU Node */}
+                    <div className="w-20 h-20 mb-5 relative flex items-center justify-center">
+                       {user.miningStartTime > 0 && <div className="absolute inset-0 bg-indigo-600/20 blur-xl rounded-full animate-pulse" />}
+                       <div className={`w-full h-full rounded-[18px] border-2 flex items-center justify-center bg-[#15151a] relative z-10 transition-colors duration-500 ${user.miningStartTime > 0 ? 'border-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.4)]' : 'border-slate-800'}`}>
+                         <Cpu className={`w-8 h-8 transition-colors duration-500 ${user.miningStartTime > 0 ? 'text-indigo-400 drop-shadow-[0_0_8px_rgba(129,140,248,0.8)] animate-pulse' : 'text-slate-600'}`} />
+                         {user.miningStartTime > 0 && (
+                            <svg className="absolute inset-[-4px] w-[calc(100%+8px)] h-[calc(100%+8px)] rotate-90 animate-[spin_4s_linear_infinite]" viewBox="0 0 100 100">
+                                <circle cx="50" cy="50" r="48" fill="none" stroke="currentColor" strokeWidth="1" className="text-indigo-500/30 font-mono" strokeDasharray="20 10" />
+                            </svg>
+                         )}
+                       </div>
+                    </div>
+
+                    {user.miningStartTime === 0 ? (
+                      <>
+                        <h4 className="text-sm font-black text-slate-100 uppercase tracking-widest drop-shadow-md">Passive Mining Node</h4>
+                        <p className="text-slate-400 text-[11px] mt-2 mb-6 max-w-xs leading-relaxed">
+                          Initialize cloud computational stream. Generate passive income continuously for 24 hours.
+                        </p>
+                        <button
+                          onClick={triggerMiningAdStart}
+                          className="w-full relative py-3.5 px-6 rounded-2xl overflow-hidden group cursor-pointer active:scale-95 transition-all shadow-[0_0_20px_rgba(79,70,229,0.2)]"
+                        >
+                           <div className="absolute inset-0 bg-gradient-to-r from-indigo-700 to-indigo-500 hover:from-indigo-600 hover:to-indigo-400 transition-colors" />
+                           <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20 mix-blend-overlay pointer-events-none" />
+                           <span className="relative z-10 text-white font-black text-[11px] uppercase tracking-widest flex items-center justify-center gap-2 drop-shadow-md">
+                              <Hammer className="w-3.5 h-3.5" /> Initialize Run
+                           </span>
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
+                          <h4 className="text-[11px] font-black text-emerald-400 uppercase tracking-widest">Node Active (24H)</h4>
+                        </div>
+                        
+                        <div className="my-5 w-full">
+                           <div className="bg-[#050508] border border-white/5 rounded-2xl p-4 flex flex-col shadow-inner relative overflow-hidden">
+                             <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+                               <Activity className="w-24 h-24" />
+                             </div>
+                             
+                             <span className="text-[10px] text-slate-500 uppercase tracking-widest font-black text-left mb-1">Time Remaining</span>
+                             <span className="text-3xl font-black text-slate-100 font-mono tracking-wider text-left tabular-nums bg-gradient-to-b from-white to-slate-400 bg-clip-text text-transparent">
+                               {(() => {
+                                 const remaining = Math.max(0, 86400 - miningSeconds);
+                                 const hrs = Math.floor(remaining / 3600);
+                                 const mins = Math.floor((remaining % 3600) / 60);
+                                 const secs = remaining % 60;
+                                 return [
+                                   hrs.toString().padStart(2, '0'),
+                                   mins.toString().padStart(2, '0'),
+                                   secs.toString().padStart(2, '0')
+                                 ].join(':');
+                               })()}
+                             </span>
+
+                             <div className="h-1.5 w-full bg-[#121216] rounded-full mt-4 overflow-hidden relative border border-white/5">
+                               <div 
+                                 className="h-full bg-gradient-to-r from-indigo-500 to-emerald-400 shadow-[0_0_10px_rgba(79,70,229,0.5)] transition-all duration-1000" 
+                                 style={{ width: `${(miningSeconds / 86400) * 100}%` }}
+                               />
+                             </div>
+                             <div className="flex justify-between items-center mt-2">
+                               <span className="text-[9px] text-slate-500 font-mono">Hashrate: 1.2 GH/s</span>
+                               <span className="text-[9px] text-slate-400 font-bold">Yield: <span className="text-amber-400">+{((miningSeconds * 0.01) || 0).toFixed(2)}</span></span>
+                             </div>
+                           </div>
+                        </div>
+
+                        <button
+                          onClick={triggerMiningAdClaim}
+                          className="w-full relative py-3.5 px-6 rounded-2xl overflow-hidden group cursor-pointer active:scale-95 transition-all shadow-[0_0_20px_rgba(251,191,36,0.15)]"
+                        >
+                          <div className="absolute inset-0 bg-gradient-to-b from-amber-500 to-amber-600 group-hover:from-amber-400 group-hover:to-amber-500 transition-colors" />
+                          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay pointer-events-none" />
+                          <span className="relative z-10 text-slate-950 font-black text-[11px] uppercase tracking-widest flex items-center justify-center gap-2">
+                             <Download className="w-3.5 h-3.5" /> Claim Yield & Reset
+                          </span>
+                        </button>
+                      </>
+                    )}
                   </div>
-
-                  {user.miningStartTime === 0 ? (
-                    <>
-                      <h4 className="text-xs font-black text-slate-100 uppercase tracking-widest">Passive Mining Node</h4>
-                      <p className="text-white/40 text-[10px] mt-1 mb-4 max-w-xs leading-normal">
-                        Activate your continuous mining stream to yield coins automatically. Requires 4s sponsor ad check-in.
-                      </p>
-                      <button
-                        onClick={triggerMiningAdStart}
-                        className="py-2.5 px-6 bg-indigo-600 text-white hover:bg-indigo-500 font-extrabold rounded-2xl text-[10px] uppercase tracking-widest cursor-pointer select-none active:scale-95 shadow-lg shadow-indigo-600/30"
-                      >
-                        Launch Mining Loop
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <h4 className="text-xs font-black text-indigo-400 uppercase tracking-widest">Mining Active (24H Ticker)</h4>
-                      
-                      {/* Countdown timer: Hours, Minutes, Seconds */}
-                      <div className="my-3.5 px-6 py-2.5 bg-[#0C0C0F] border border-white/5 rounded-2xl">
-                        <span className="text-lg font-black text-slate-100 font-mono tracking-wider">
-                          {(() => {
-                            const remaining = Math.max(0, 86400 - miningSeconds);
-                            const hrs = Math.floor(remaining / 3600);
-                            const mins = Math.floor((remaining % 3600) / 60);
-                            const secs = remaining % 60;
-                            return [
-                              hrs.toString().padStart(2, '0'),
-                              mins.toString().padStart(2, '0'),
-                              secs.toString().padStart(2, '0')
-                            ].join(':');
-                          })()}
-                        </span>
-                        <span className="text-[8px] text-indigo-400 font-extrabold block uppercase tracking-widest mt-0.5">Time Remaining</span>
-                      </div>
-
-                      <p className="text-[10px] text-slate-400 font-semibold mb-4">
-                        Current accumulation rate: <span className="font-mono text-indigo-300 font-bold">+{(miningSeconds * 0.01).toFixed(2)} 🪙</span>
-                      </p>
-
-                      <button
-                        onClick={triggerMiningAdClaim}
-                        className="py-2.5 px-6 bg-[#ffb020] hover:brightness-105 text-slate-950 font-black rounded-2xl text-[10px] uppercase tracking-widest cursor-pointer transition-all active:scale-95"
-                      >
-                        Claim Mining & Reset
-                      </button>
-                    </>
-                  )}
                 </div>
 
                 {/* Premium Active Quick Launch Columns - Exact 2 Items Per Row */}
-                <div className="grid grid-cols-2 gap-3">
+                {adminToggles.showGames && (
+                  <div className="grid grid-cols-2 gap-3">
                   {/* Crash Game Card */}
                   <div
                     onClick={playVIPCrashGame}
@@ -1092,6 +1161,7 @@ export default function App() {
                     <span className="text-[8px] text-[#ffb020] font-extrabold mt-1">GOLD REVEAL</span>
                   </div>
                 </div>
+                )}
               </motion.div>
             )}
 

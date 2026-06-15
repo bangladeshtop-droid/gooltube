@@ -4,7 +4,7 @@ import {
   ArrowLeft, Menu, X, Users, ShieldAlert, CheckCircle, XCircle, 
   ChevronRight, Activity, PlusCircle, Bookmark, Landmark, HelpCircle,
   Search, Download, Trash2, Edit2, Save, Bot, Settings, Lock, Plus,
-  Eye, Clock, Link, DollarSign, FileText, AlertTriangle, Coins, Cpu
+  Eye, Clock, Link, DollarSign, FileText, AlertTriangle, Coins, Cpu, ToggleRight, LayoutGrid, Gamepad2, Image, List
 } from 'lucide-react';
 import { User, Task, TaskSubmission, Transaction, AppNotification } from '../types';
 
@@ -81,7 +81,7 @@ export default function AdminPanel({
 
   // Sidebar Controls
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'resource_center' | 'settings'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'resource_center' | 'settings' | 'toggles'>('dashboard');
 
   // Resource Center Subpages
   const [resSubPage, setResSubPage] = useState<'none' | 'control_center' | 'transactions'>('none');
@@ -1115,6 +1115,7 @@ export default function AdminPanel({
                     { id: 'dashboard', label: 'Dashboard', icon: Activity, desc: 'System overview and live statistics' },
                     { id: 'users', label: 'User Manager', icon: Users, desc: 'Manage client accounts and balances' },
                     { id: 'resource_center', label: 'Resource Center', icon: Cpu, desc: 'Manage tasks, payments and support channels' },
+                    { id: 'toggles', label: 'Toggle Manager', icon: ToggleRight, desc: 'Manage system feature visibility' },
                     { id: 'settings', label: 'Security & Settings', icon: Settings, desc: 'Configure bot API and admin security lock' }
                   ].map((m) => {
                     const Icon = m.icon;
@@ -3255,6 +3256,57 @@ export default function AdminPanel({
           )}
         </AnimatePresence>
 
+        {/* ======================= TAB: TOGGLE MANAGER ======================= */}
+        {activeTab === 'toggles' && (
+          <div className="space-y-4">
+            <h3 className="text-xs font-black tracking-wider text-indigo-400 uppercase text-left flex items-center gap-2">
+              <ToggleRight className="w-4 h-4 text-indigo-500" /> Toggle Manager
+            </h3>
+            
+            <div className="bg-[#121216] border border-white/5 p-4 rounded-3xl shadow-xl">
+               <p className="text-[10px] text-white/40 mb-4 leading-normal">
+                 Enable or disable specific user-facing sections dynamically. Settings are applied in real-time.
+               </p>
+
+               <div className="space-y-3">
+                 {[
+                   { key: 'showCategories', label: 'Category Toggles', icon: LayoutGrid, hint: 'Toggle visibility of task and apps categories.' },
+                   { key: 'showGames', label: 'Game Toggles', icon: Gamepad2, hint: 'Toggle visibility of Quick Launch premium games section.' },
+                   { key: 'showGameLogos', label: 'All Game Logo', icon: Image, hint: 'Toggle visibility of game graphical icons in lists.' }
+                 ].map(item => {
+                    const isActive = JSON.parse(localStorage.getItem('__admin_toggles_config') || '{}')[item.key] !== false;
+                    return (
+                      <div key={item.key} className="flex items-center justify-between p-4 bg-[#0A0A0C] border border-white/5 rounded-2xl">
+                        <div className="flex items-start gap-3">
+                           <div className={`p-2 rounded-xl border ${isActive ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400' : 'bg-white/5 border-white/10 text-slate-500'}`}>
+                             <item.icon className="w-4 h-4" />
+                           </div>
+                           <div>
+                             <h4 className="text-xs font-black text-slate-200">{item.label}</h4>
+                             <p className="text-[9px] text-white/30 tracking-tight mt-0.5">{item.hint}</p>
+                           </div>
+                        </div>
+                        <button 
+                           onClick={() => {
+                              const conf = JSON.parse(localStorage.getItem('__admin_toggles_config') || '{}');
+                              conf[item.key] = isActive ? false : true;
+                              localStorage.setItem('__admin_toggles_config', JSON.stringify(conf));
+                              // force re-render trick
+                              setActiveTab('dashboard'); 
+                              setTimeout(() => setActiveTab('toggles'), 10);
+                           }}
+                           className={`w-12 h-6 rounded-full relative transition-colors ${isActive ? 'bg-indigo-600' : 'bg-slate-700'}`}
+                        >
+                           <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm transition-all ${isActive ? 'left-7' : 'left-1'}`} />
+                        </button>
+                      </div>
+                    )
+                 })}
+               </div>
+            </div>
+          </div>
+        )}
+
         {/* ======================= TAB 4: SECURITY & SETTINGS ======================= */}
         {activeTab === 'settings' && (
           <div className="space-y-4">
@@ -3468,6 +3520,48 @@ export default function AdminPanel({
           </div>
         )}
 
+      {/* Custom Confirm Modal */}
+      <AnimatePresence>
+        {customConfirmAction && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-[100] flex flex-col items-center justify-center p-6"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="bg-[#121216] border border-white/10 rounded-3xl p-6 w-full max-w-sm flex flex-col items-center text-center shadow-2xl"
+            >
+              <div className="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-4">
+                <AlertTriangle className="w-8 h-8 text-red-500" />
+              </div>
+              <h3 className="text-lg font-black text-slate-100 mb-2">Confirm Action</h3>
+              <p className="text-[11px] text-white/50 mb-6 px-2">{customConfirmAction.message}</p>
+              
+              <div className="flex gap-3 w-full">
+                <button
+                  onClick={() => setCustomConfirmAction(null)}
+                  className="flex-1 py-3 px-4 bg-white/5 hover:bg-white/10 border border-white/5 rounded-xl text-slate-300 font-bold text-xs transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    customConfirmAction.onConfirm();
+                    setCustomConfirmAction(null);
+                  }}
+                  className="flex-1 py-3 px-4 bg-red-600 hover:bg-red-500 rounded-xl text-white font-black text-xs shadow-lg shadow-red-600/20 transition-colors"
+                >
+                  Yes, Proceed
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       </main>
     </div>
   );
